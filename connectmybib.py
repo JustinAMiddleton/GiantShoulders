@@ -5,16 +5,19 @@ import xml.etree.ElementTree as ET
 # read in existing analyzed DB
 
 # read in current bib
+
+
 def readBib(file):
     papers = []
     tree = ET.parse(file).getroot()
     for record in tree.findall("./records/record"):
         papers.append({
             "title": record.findall("./titles/title")[0].text,
-            "authors": [author.text for author in \
-                record.findall("./contributors/authors/author")]
+            "authors": [author.text for author in
+                        record.findall("./contributors/authors/author")]
         })
     return papers
+
 
 def findpaper(author, title):
     try:
@@ -39,13 +42,15 @@ def findpaper(author, title):
     return None
 
 
-bib = readBib("C:/Users/dlf/git/codesearchcenter/My Collection.xml")
-bib = [ { "authors": ["Mel O. Cinneide"], "title": "Impact of stack overflow code snippets on software cohesion: A preliminary study"}]
+bib = readBib("C:/Users/jalan/git/GiantShoulders/My Collection.xml")
+bib = [{"authors": ["Andy Podgurski"],
+        "title": "Retrieving Reusable Software by Sampling Behavior"}]
 for paper in bib:
     title = paper["title"]
     print(title)
 
-    for author in paper["authors"][::-1]: #sorted(paper["authors"], key=len, reverse=True):
+    # sorted(paper["authors"], key=len, reverse=True):
+    for author in paper["authors"][::-1]:
         author = " ".join(author.split(", ")[::-1])
 
         scholar = findpaper(author, title)
@@ -62,3 +67,7 @@ for paper in bib:
             break
 
 # Current failure: empty get_citedby sets.
+#   In get_citedby(): hasattr(self, 'id_scholarcitedby') returns false after fill.
+#   In fill(): source is citations.
+#       key == 'Total citations' is never true for the URL.
+#   Nevermind...I was just pinging a document with no cites...
