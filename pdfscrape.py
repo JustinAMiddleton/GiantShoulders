@@ -124,33 +124,29 @@ def printFiles(filename, citationtext, citations, out_dir=".\\cites\\"):
         json.dump(citations, outfile, indent=2, separators=(',', ': '))
 
 
-def scrapeFilesNew(pdf_files, start=None):
-    started = start is None
-    for pdf_file in pdf_files:
-        started = started or pdf_file == start
-        if not started:
-            continue
+def scrapeFileNew(pdf_file):
+    try:
+        print(pdf_file)
+        pdf = loadFile(pdf_file)
+    except Exception as e:
+        print("\tCannot load: " + str(e))
+        printFiles(pdf_file, "", {})
+        return {}
 
-        try:
-            print(pdf_file)
-            pdf = loadFile(pdf_file)
-        except Exception as e:
-            print("\tCannot load: " + str(e))
-            printFiles(pdf_file, "", {})
-            continue
+    citationtext = ""
+    citations = {}
+    try:
+        page = getReferencePage(pdf)
+        citationtext = scrapeText(page)
+        citations = scrapeRefs(citationtext)
+    except Exception as e:
+        print(str(e))
 
-        citationtext = ""
-        citations = {}
-        try:
-            page = getReferencePage(pdf)
-            citationtext = scrapeText(page)
-            citations = scrapeRefs(citationtext)
-        except Exception as e:
-            print(str(e))
+    citations = fixMissing(citations)
+    printFiles(pdf_file, citationtext, citations)
+    pdf.file.close()
 
-        citations = fixMissing(citations)
-        printFiles(pdf_file, citationtext, citations)
-        pdf.file.close()
+    return citations
 
 
 def walkFiles(sourcedir="C:\\Users\\dlf\\Desktop\\codeSearch", ext=".pdf"):
@@ -164,17 +160,49 @@ def freshScrape(files = None, start = None):
     if files is None:
         start = "C:\\Users\\dlf\\Desktop\\codeSearch\\CloneDetection\\Kim_2018_FaCoY_CodeToCodeSearch.pdf"
         files = walkFiles()
-    scrapeFilesNew(files, start)
 
+    citations = []
+    started = start is None
+    for pdf_file in files:
+        started = started or pdf_file == start
+        if not started:
+            continue
+
+        citation = scrapeFileNew(pdf_file)
+        citations.append({ "file": pdf_file, "citations": citation })
+
+    return citations
+
+
+def RWProcess(topics, citations):
+    topiclist = []
+    for topicline in topics.strip().split("\n"):
+        topic, refs = topicline.split(":")
+        topiclist.append({ "topic": topic, "refs": [citations[int(i.strip())] for i in refs.split(",")] })
+
+    return topiclist
 
 if __name__ == "__main__":
-    args = sys.argv[1:] if len(sys.argv) > 1 else None
-    freshScrape(args)
+    # Expectng only one right now... will fix.
+    papers = [sys.argv[1]] if len(sys.argv) > 1 else walkFiles()
+    citations = freshScrape(papers)[0]["citations"]
+    if len(sys.argv) > 2:
+        name = os.path.basename(papers[0]).split(".")[0]
+        with open(sys.argv[2], "r") as infile:
+            rwtopics = RWProcess(infile.read(), citations)
+
+        with open("rws/RW_%s.txt" % name, "wb") as outfile:
+            for topic in rwtopics:
+                outfile.write(topic["topic"].encode("utf8") + b":\n")
+                for ref in topic["refs"]:
+                    outfile.write(b"\t- ")
+                    outfile.write(ref.replace("\n", "\n\t\t").encode("utf8"))
+                    outfile.write(b"\n")
+                outfile.write(b"\n")
+
     sys.exit(0)
 
-    papers = walkFiles()
     names = set(os.path.basename(name)[:-4] for name in papers)  # expect .pdf
-
     jsons = walkFiles(".\\cites", ".json")
     unprocessed = [name for name in jsons if os.path.basename(name)[
         :-5] not in names]

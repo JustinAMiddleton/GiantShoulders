@@ -68,16 +68,20 @@ def findCitedBy(paper):
 
 
 if __name__ == "__main__":
-    bib = readBib("C:/Users/jalan/git/GiantShoulders/My Collection.xml")
-    bib = [{"authors": ["Andy Podgurski"],
-            "title": "Retrieving Reusable Software by Sampling Behavior"}]
+    # bib = readBib("C:/Users/dlf/git/GiantShoulders/My Collection.xml")
+    bib = [{"authors": ["Matt Staats", "Gregg Rothermel"],
+            "title": "Understanding User Understanding: Determining Correctness of Generated Program Invariants"}]
     for paper in bib:
         citedby = findCitedBy(paper)
-        paper["citedby"] = [{"authors": paper["author"],
-                             "title": paper["title"],
-                             "year": paper["year"],
-                             "journal": paper["journal"],
-                             "citedby": paper.citedby}]
+        paper["citedby"] = [{"authors": paper["authors"] if "authors" in paper else "",
+                             "title": paper["title"] if "title" in paper else "",
+                             "year": paper["year"] if "year" in paper else "",
+                             "journal": paper["journal"] if "journal" in paper else "",
+                             #"citedby": paper.citedby
+                             }]
+
+        with open("citedby/" + paper["title"].replace(" ", "_") + ".json", "w") as outfile:
+            json.dump(paper, outfile, indent=2, separators=(',', ': '))
 
 SAMPLEBIB = [{"authors": ["Andy Podgurski"],
               "title": "Retrieving Reusable Software by Sampling Behavior"}]
