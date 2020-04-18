@@ -160,14 +160,16 @@ def walkFiles(sourcedir="C:\\Users\\dlf\\Desktop\\codeSearch", ext=".pdf"):
             if file.endswith(ext)]
 
 
-def freshScrape():
-    start = "C:\\Users\\dlf\\Desktop\\codeSearch\\CloneDetection\\Kim_2018_FaCoY_CodeToCodeSearch.pdf"
-    files = walkFiles()
+def freshScrape(files = None, start = None):
+    if files is None:
+        start = "C:\\Users\\dlf\\Desktop\\codeSearch\\CloneDetection\\Kim_2018_FaCoY_CodeToCodeSearch.pdf"
+        files = walkFiles()
     scrapeFilesNew(files, start)
 
 
 if __name__ == "__main__":
-    freshScrape()
+    args = sys.argv[1:] if len(sys.argv) > 1 else None
+    freshScrape(args)
     sys.exit(0)
 
     papers = walkFiles()
