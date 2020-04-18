@@ -16,7 +16,9 @@ def readBib(file):
         })
     return papers
 
-def findpaper(author, title):
+def findPaper(author, title):
+    title = title.lower()
+
     try:
         authors = scholarly.search_author(author)
     except StopIteration:
@@ -25,15 +27,16 @@ def findpaper(author, title):
 
     for fullauthor in authors:
         fullauthor = fullauthor.fill()
-        print("\t" + author + " found!")
+        print("\tOne " + author + " found! Searching for their paper...")
 
         authorbib = fullauthor.publications
+
         try:
             for b in authorbib:
-                bibtitle = b.bib["title"]
-                if bibtitle.lower() == title.lower():
+                if b.bib["title"].lower() == title:
                     return b.fill()
         except StopIteration:
+            print("\t\t%s has an empty bib!")
             continue
 
     return None
@@ -48,7 +51,7 @@ for paper in bib:
     for author in paper["authors"][::-1]: #sorted(paper["authors"], key=len, reverse=True):
         author = " ".join(author.split(", ")[::-1])
 
-        scholar = findpaper(author, title)
+        scholar = findPaper(author, title)
         if scholar is None:
             print("\tNot found...")
         else:
