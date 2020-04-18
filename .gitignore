@@ -1,2 +1,4 @@
 cites/*.json
 cites/*.txt
+*.xml
+My Collection.Data/

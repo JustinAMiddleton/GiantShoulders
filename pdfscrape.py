@@ -7,9 +7,11 @@ import json
 import sys
 
 # Has a different format
-problematics = {"C:\\Users\\dlf\\Desktop\\codeSearch\\CloneDetection\\Lopes_2017_DuplicationOnGitHub.pdf": [26,27],
-    "C:\\Users\\dlf\\Desktop\\codeSearch\\CloneDetection\\Zhang_2019_ThesisLeveragingSimilarities.pdf": [182,202]}
+problematics = {"C:\\Users\\dlf\\Desktop\\codeSearch\\CloneDetection\\Lopes_2017_DuplicationOnGitHub.pdf": [26, 27],
+                "C:\\Users\\dlf\\Desktop\\codeSearch\\CloneDetection\\Zhang_2019_ThesisLeveragingSimilarities.pdf": [182, 202]}
 # C:\Users\dlf\Desktop\codeSearch\Search\Ye_2002_Codebrokerprelim.pdf
+
+
 def loadFile(file):
     global problematics
     pdf = pdfquery.PDFQuery(file)
@@ -20,18 +22,20 @@ def loadFile(file):
     print("\tloaded")
     return pdf
 
-def getReferencePage(pdf, split_on = "REFERENCES"):
+
+def getReferencePage(pdf, split_on="REFERENCES"):
     # find references
     ref = pdf.pq("LTPage:contains('%s')" % split_on)
     if not ref:
         ref = pdf.pq("LTPage:contains('%s')" % split_on.title())
 
     if len(ref) != 1:
-        pass #raise Exception("\tWOMP WOMP")
+        pass  # raise Exception("\tWOMP WOMP")
 
     return ref
 
-def scrapeText(page, split_on = "REFERENCES"):
+
+def scrapeText(page, split_on="REFERENCES"):
     citationtext = ""
 
     text = page.text()
@@ -45,6 +49,7 @@ def scrapeText(page, split_on = "REFERENCES"):
         page = page.next()
 
     return citationtext
+
 
 def scrapeRefs(pagetext):
     hasQuotes = "\u201c" in pagetext
@@ -72,6 +77,7 @@ def scrapeRefs(pagetext):
         print("\tNo citations found second try!")
 
     return citations
+
 
 def fixMissing(citations):
     missing = 0
@@ -103,11 +109,13 @@ def fixMissing(citations):
                 spanstart = newcite.span()[0]
                 spanend = newcites[ncidx + 1].span()[0] if (ncidx+1) < nclen else \
                     len(prevcitation)
-                citations[ncidx + expected - 1] = prevcitation[spanstart:spanend]
+                citations[ncidx + expected -
+                          1] = prevcitation[spanstart:spanend]
 
     return citations
 
-def printFiles(filename, citationtext, citations, out_dir = ".\\cites\\"):
+
+def printFiles(filename, citationtext, citations, out_dir=".\\cites\\"):
     outfilename = os.path.basename(filename).split(".")[0]
     with open(out_dir + outfilename + ".txt", "w") as outfile:
         json.dump(citationtext, outfile)
@@ -115,7 +123,8 @@ def printFiles(filename, citationtext, citations, out_dir = ".\\cites\\"):
     with open(out_dir + outfilename + ".json", "w") as outfile:
         json.dump(citations, outfile, indent=2, separators=(',', ': '))
 
-def scrapeFilesNew(pdf_files, start = None):
+
+def scrapeFilesNew(pdf_files, start=None):
     started = start is None
     for pdf_file in pdf_files:
         started = started or pdf_file == start
@@ -143,26 +152,32 @@ def scrapeFilesNew(pdf_files, start = None):
         printFiles(pdf_file, citationtext, citations)
         pdf.file.close()
 
-def walkFiles(sourcedir = "C:\\Users\\dlf\\Desktop\\codeSearch", ext = ".pdf"):
-    return [os.path.join(dirpath,file) \
-        for dirpath, dir, files in os.walk(sourcedir) \
-        for file in files \
-        if file.endswith(ext)]
 
-def freshScrape():
-    start = "C:\\Users\\dlf\\Desktop\\codeSearch\\CloneDetection\\Kim_2018_FaCoY_CodeToCodeSearch.pdf"
-    files = walkFiles()
+def walkFiles(sourcedir="C:\\Users\\dlf\\Desktop\\codeSearch", ext=".pdf"):
+    return [os.path.join(dirpath, file)
+            for dirpath, dir, files in os.walk(sourcedir)
+            for file in files
+            if file.endswith(ext)]
+
+
+def freshScrape(files = None, start = None):
+    if files is None:
+        start = "C:\\Users\\dlf\\Desktop\\codeSearch\\CloneDetection\\Kim_2018_FaCoY_CodeToCodeSearch.pdf"
+        files = walkFiles()
     scrapeFilesNew(files, start)
 
-if __name__=="__main__":
-    freshScrape()
+
+if __name__ == "__main__":
+    args = sys.argv[1:] if len(sys.argv) > 1 else None
+    freshScrape(args)
     sys.exit(0)
 
     papers = walkFiles()
-    names = set(os.path.basename(name)[:-4] for name in papers) #expect .pdf
+    names = set(os.path.basename(name)[:-4] for name in papers)  # expect .pdf
 
     jsons = walkFiles(".\\cites", ".json")
-    unprocessed = [name for name in jsons if os.path.basename(name)[:-5] not in names]
+    unprocessed = [name for name in jsons if os.path.basename(name)[
+        :-5] not in names]
 
     empties = []
     missings = []
@@ -174,12 +189,12 @@ if __name__=="__main__":
 
         missingcites = []
         missingno = 0
-        for actual, baseexpected in enumerate(sorted(map(int,citations.keys())), 1):
+        for actual, baseexpected in enumerate(sorted(map(int, citations.keys())), 1):
             expected = int(baseexpected) + missingno
             if expected < actual:
                 missingcites.extend(range(expected, actual))
         if missingcites:
-            missings.append((j,missingcites))
+            missings.append((j, missingcites))
 
     pprint(unprocessed)
     pprint(empties)
