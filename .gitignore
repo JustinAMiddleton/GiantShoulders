@@ -1,4 +1,5 @@
-cites/*.json
-cites/*.txt
+cites/*
+citedby/*
+rws/*
 *.xml
 My Collection.Data/
